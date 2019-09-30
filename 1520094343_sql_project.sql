@@ -53,7 +53,7 @@ SELECT facid,
        membercost,
        monthlymaintenance
   FROM country_club.Facilities
- WHERE (membercost / monthlymaintenance)*100 < 20
+ WHERE (membercost / monthlymaintenance)*100.00 < 20.00 --member cost values are floats
    AND membercost > 0
    
 
@@ -69,7 +69,7 @@ more than $100? Return the name and monthly maintenance of the facilities
 in question. */
 SELECT name,
        monthlymaintenance,
-  CASE WHEN monthlymaintenance > 100 THEN 'expensive'
+  CASE WHEN monthlymaintenance > 100.00 THEN 'expensive'
        ELSE 'cheap' END AS cost_category
   FROM country_club.Facilities
 
@@ -87,11 +87,12 @@ the member name. */
 SELECT DISTINCT CONCAT(members.surname, ', ', members.firstname) as member_name,
        facilities.name
   FROM country_club.Bookings bookings
-       LEFT JOIN country_club.Members members ON bookings.memid = members.memid
-       LEFT JOIN country_club.Facilities facilities ON bookings.facid = facilities.facid
- WHERE bookings.facid IN (0, 1) 
-       AND members.surname != 'GUEST'
- ORDER BY 1
+       INNER JOIN country_club.Members members ON bookings.memid = members.memid 
+             AND members.surname != 'GUEST'
+       INNER JOIN country_club.Facilities facilities ON bookings.facid = facilities.facid 
+             AND facilities.name LIKE '%Tennis Court%'
+ ORDER BY member_name
+
 
 /* Q8: How can you produce a list of bookings on the day of 2012-09-14 which
 will cost the member (or guest) more than $30? Remember that guests have
@@ -104,12 +105,12 @@ SELECT facilities.name,
        CASE WHEN bookings.memid = 0 THEN facilities.guestcost * bookings.slots
             ELSE facilities.membercost * bookings.slots END AS cost
   FROM country_club.Bookings bookings
-       LEFT JOIN country_club.Members members on bookings.memid = members.memid
-       LEFT JOIN country_club.Facilities facilities on bookings.facid = facilities.facid
+       INNER JOIN country_club.Members members on bookings.memid = members.memid
+       INNER JOIN country_club.Facilities facilities on bookings.facid = facilities.facid
  WHERE bookings.starttime BETWEEN '2012-09-14 00:00:00'AND '2012-09-14 23:59:59'
    AND (CASE WHEN bookings.memid = 0 THEN facilities.guestcost * bookings.slots
             ELSE facilities.membercost * bookings.slots END) > 30
- ORDER BY 3 DESC
+ ORDER BY cost DESC
 
 /* Q9: This time, produce the same result as in Q8, but using a subquery. */
 SELECT sub.name,
@@ -121,12 +122,12 @@ SELECT sub.name,
               CASE WHEN bookings.memid = 0 THEN facilities.guestcost * bookings.slots
                    ELSE facilities.membercost * bookings.slots END AS cost
        FROM country_club.Bookings bookings
-              LEFT JOIN country_club.Members members on bookings.memid = members.memid
-              LEFT JOIN country_club.Facilities facilities on bookings.facid = facilities.facid
+              INNER JOIN country_club.Members members on bookings.memid = members.memid
+              INNER JOIN country_club.Facilities facilities on bookings.facid = facilities.facid
        WHERE bookings.starttime BETWEEN '2012-09-14 00:00:00'AND '2012-09-14 23:59:59'
        ) sub
 WHERE cost > 30
-ORDER BY 3 DESC
+ORDER BY cost DESC
 
 /* Q10: Produce a list of facilities with a total revenue less than 1000.
 The output of facility name and total revenue, sorted by revenue. Remember
@@ -142,5 +143,5 @@ SELECT sub.name,
               LEFT JOIN country_club.Facilities facilities on bookings.facid = facilities.facid
         GROUP BY facilities.name
         ) sub
- WHERE sub.revenue < 1000
+ WHERE sub.revenue < 1000.00 --revenues are floats
  ORDER BY sub.revenue
